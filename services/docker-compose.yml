@@ -1,0 +1,16 @@
+version: '3.9'
+
+services:
+
+  composer:
+    image: sevelantis/composer-service:0.1 # TODO registry.deti
+    container_name: composer
+    ports:
+      - "8888:8888"
+    depends_on:
+      - mysql
+      - activemq
+    restart: on-failure
+    env_file: ./composer/composer-deploy.env
+    environment:
+      - PYTHONPATH=/home/app
