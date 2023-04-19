@@ -12,5 +12,5 @@ certs/
 .DS_Store
 sample_images/result.jpg
 sample_images/reply.png
-*-deploy.env
+*deploy.env
 volume/
