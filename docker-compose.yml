@@ -2,6 +2,7 @@ version: '3.9'
 
 services:
 
+# INFRASTRUCTURE
   mysql:
     image: mysql/mysql-server:8.0
     container_name: mysql
@@ -16,7 +17,7 @@ services:
       MYSQL_ROOT_PASSWORD: admin
     restart: on-failure
     volumes:
-      - ./infra/mysql/config.sql:/docker-entrypoint-initdb.d/data.sql
+      - ./mysql/config.sql:/docker-entrypoint-initdb.d/data.sql
 
   activemq:
     image: rmohr/activemq:5.15.9
@@ -32,7 +33,7 @@ services:
   localstack:
     image: localstack/localstack-pro
     container_name: localstack
-    env_file: ./infra/s3connector/s3connector-deploy.env
+    env_file: ./s3connector/deploy.env
     ports:
       - "4566:4566"            # LocalStack Gateway
       - "4510-4559:4510-4559"  # external services port range
@@ -42,5 +43,37 @@ services:
     environment:
       - DOCKER_HOST=unix:///var/run/docker.sock
     volumes:
-      - ./infra/s3connector/localstack/volume:/var/lib/localstack
+      - ./localstack/volume:/var/lib/localstack
       - /var/run/docker.sock:/var/run/docker.sock
+
+
+# SERVICES
+  composer:
+    image: registry.deti:5000/egs-conv/composer-service:v1
+    container_name: composer
+    ports:
+      - "8888:8888"
+    depends_on:
+      - mysql
+      - activemq
+    restart: on-failure
+    env_file: ./composer/deploy.env
+    environment:
+      - PYTHONPATH=/home/app
+
+  notification:
+    image: registry.deti:5000/egs-conv/notification-service:v1
+    container_name: notification
+    env_file: ./notification/deploy.env
+    depends_on:
+      - localstack
+      - activemq
+    
+  s3connector:
+    image: registry.deti:5000/egs-conv/s3connector-service:v1
+    container_name: s3connector
+    env_file: ./s3connector/deploy.env
+    depends_on:
+      - localstack
+      - activemq
+
